@@ -5,7 +5,9 @@ import { User } from 'src/user/entities/user.entity';
 import { Repository } from 'typeorm';
 import { RegisterDto } from './dtos/register.dto';
 import * as bcrypt from 'bcrypt'
+import * as crypto from 'crypto'
 import { LoginDto } from './dtos/login.dto';
+import { ForgotPasswordDto } from './dtos/forgot-password.dto';
 
 @Injectable()
 export class AuthService {
@@ -65,6 +67,27 @@ export class AuthService {
             accessToken,
             refreshToken,
             user,
+        }
+    }
+
+    async forgotPassword(forgotPassworDto: ForgotPasswordDto) {
+        const user = await this.userRepo.findOne({
+            where: {email: forgotPassworDto.email}
+        });
+
+        if(!user) throw new BadRequestException("User not found");
+
+        const token = crypto.randomBytes(32).toString('hex');
+
+        user.resetToken = token;
+        user.resetTokenExpires = new Date(Date.now() + 3600000);
+
+
+        await this.userRepo.save(user);
+
+        return {
+            message: 'Password reset token generated',
+            token,
         }
     }
 }
