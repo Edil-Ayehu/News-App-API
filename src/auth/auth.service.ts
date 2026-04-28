@@ -8,6 +8,7 @@ import * as bcrypt from 'bcrypt'
 import * as crypto from 'crypto'
 import { LoginDto } from './dtos/login.dto';
 import { ForgotPasswordDto } from './dtos/forgot-password.dto';
+import { ResetPasswordDto } from './dtos/reset-password.dto';
 
 @Injectable()
 export class AuthService {
@@ -88,6 +89,27 @@ export class AuthService {
         return {
             message: 'Password reset token generated',
             token,
+        }
+    }
+
+    async resetPassword(resetPasswordDto: ResetPasswordDto) {
+        const user = await this.userRepo.findOne({
+            where: {resetToken: resetPasswordDto.token}
+        });
+
+        if (!user || !user.resetTokenExpires || user.resetTokenExpires < new Date()) {
+            throw new BadRequestException('Invalid or expired token');
+        }
+
+        user.password = await bcrypt.hash(resetPasswordDto.newPassword, 10);
+        user.resetToken = null,
+        user.resetTokenExpires = null
+
+        await this.userRepo.save(user)
+
+        return {
+            message: 'Password reset successful!',
+
         }
     }
 }

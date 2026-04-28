@@ -14,14 +14,14 @@ export class User {
  @Column()
  password: string;
 
- @Column({ nullable: true })
-  refreshToken: string;
+ @Column({type: 'text', nullable: true })
+  refreshToken: string | null
 
-  @Column({ nullable: true })
-  resetToken: string;
+  @Column({type: 'text', nullable: true })
+  resetToken: string | null
 
-  @Column({ nullable: true })
-  resetTokenExpires: Date;
+  @Column({type: 'timestamp', nullable: true })
+  resetTokenExpires: Date | null
 
   @CreateDateColumn()
   createdAt: Date;
