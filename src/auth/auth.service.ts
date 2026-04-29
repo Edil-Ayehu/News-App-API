@@ -78,32 +78,40 @@ export class AuthService {
 
         if(!user) throw new BadRequestException("User not found");
 
-        const token = crypto.randomBytes(32).toString('hex');
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-        user.resetToken = token;
-        user.resetTokenExpires = new Date(Date.now() + 3600000);
+
+        user.resetOtp = otp;
+        user.resetOtpExpires = new Date(Date.now() + 5 * 60 * 1000);
 
 
         await this.userRepo.save(user);
 
         return {
-            message: 'Password reset token generated',
-            token,
+            message: 'OTP sent successfully',
+            otp,
         }
     }
 
     async resetPassword(resetPasswordDto: ResetPasswordDto) {
         const user = await this.userRepo.findOne({
-            where: {resetToken: resetPasswordDto.token}
+            where: {
+                resetOtp: resetPasswordDto.otp,
+                email: resetPasswordDto.email,
+            }
         });
 
-        if (!user || !user.resetTokenExpires || user.resetTokenExpires < new Date()) {
-            throw new BadRequestException('Invalid or expired token');
+        if (
+            !user || 
+            !user.resetOtpExpires || 
+            user.resetOtpExpires < new Date()
+        ) {
+            throw new BadRequestException('Invalid or expired OTP');
         }
 
         user.password = await bcrypt.hash(resetPasswordDto.newPassword, 10);
-        user.resetToken = null,
-        user.resetTokenExpires = null
+        user.resetOtp = null,
+        user.resetOtpExpires = null
 
         await this.userRepo.save(user)
 

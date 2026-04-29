@@ -18,10 +18,10 @@ export class User {
   refreshToken: string | null
 
   @Column({type: 'text', nullable: true })
-  resetToken: string | null
+  resetOtp: string | null
 
   @Column({type: 'timestamp', nullable: true })
-  resetTokenExpires: Date | null
+  resetOtpExpires: Date | null
 
   @CreateDateColumn()
   createdAt: Date;
