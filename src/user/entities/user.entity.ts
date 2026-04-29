@@ -1,4 +1,4 @@
-import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, JoinTable, ManyToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 
 @Entity()
 export class User {
@@ -13,6 +13,16 @@ export class User {
 
  @Column()
  password: string;
+
+ @Column({ nullable: true })
+  bio: string;
+
+  @Column({ nullable: true })
+  avatar: string;
+
+  @ManyToMany(() => User)
+  @JoinTable()
+  following: User[];
 
  @Column({type: 'text', nullable: true })
   refreshToken: string | null
