@@ -27,9 +27,9 @@ export class ArticlesController {
         return await this.articlesService.findAll()
     }
 
-    @Get(':id')
-    async findOne(@Param('id') id: string) {
-        return await this.articlesService.findOne(id)
+    @Get(':slug')
+    async findOne(@Param('slug') slug: string) {
+        return await this.articlesService.findOne(slug)
     }
 
     @Delete(":id")

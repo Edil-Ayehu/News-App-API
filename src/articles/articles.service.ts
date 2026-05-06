@@ -42,9 +42,11 @@ export class ArticlesService {
         });
     }
 
-    async findOne(id: string) {
+    async findOne(slug: string) {
+        // instead of exposing IDs, using slug is much easier for users to read, share, and remember
+        // and also better for search engine optimization : Search engines like Google prefer meaningful URLs
         const article = await this.articleRepo.findOne({
-            where: {id: id},
+            where: {slug: slug},
             relations: ['author'],
         });
 
