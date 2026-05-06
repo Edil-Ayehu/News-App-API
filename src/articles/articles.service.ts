@@ -76,5 +76,26 @@ export class ArticlesService {
             message: "Article deleted successfully",
         }
     }
+
+    async update(userId: string, articleId: string, dto: any) {
+        const article = await this.articleRepo.findOne({
+            where: {id: articleId},
+            relations: ['author'],
+        });
+
+        if (!article) throw new NotFoundException("Article not found");
+
+        if (article.author.id !== userId) {
+            throw new ForbiddenException("Not allowed");
+        }
+
+        if (dto.title) {
+            dto.slug = slugify(dto.title, {lower: true, strict: true});
+        }
+
+        Object.assign(article, dto)
+
+        return await this.articleRepo.save(article);
+    }
     
 }
