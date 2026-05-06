@@ -99,5 +99,30 @@ export class ArticlesService {
 
         return await this.articleRepo.save(article);
     }
+
+    async trendingArticles() {
+        return await this.articleRepo.find({
+            order: {viewsCount: 'DESC'},
+            take: 10,
+            relations: ['author'],
+        });
+    }
+
+    async latestArticles() {
+        return await this.articleRepo.find({
+            order: {createdAt: 'DESC'},
+            take: 10,
+            relations: ['author']
+        });
+    }
+
+    async featuredArticles () {
+        return await this.articleRepo.find({
+            where: {isFeatured: true},
+            order: {createdAt: 'DESC'},
+            take: 10,
+            relations: ['author'],
+        })
+    } 
     
 }

@@ -27,7 +27,7 @@ export class ArticlesController {
         return await this.articlesService.findAll()
     }
 
-    @Get(':slug')
+    @Get('slug/:slug')
     async findOne(@Param('slug') slug: string) {
         return await this.articlesService.findOne(slug)
     }
@@ -47,5 +47,20 @@ export class ArticlesController {
         @Body() dto: UpdateArticleDto,
     ) {
         return await this.articlesService.update(user.sub, articleId, dto);
+    }
+
+    @Get("trending-articles")
+    async trendingArticles() {
+        return await this.articlesService.trendingArticles()
+    }
+
+    @Get("latest-articles")
+    async latestArticles() {
+        return await this.articlesService.latestArticles()
+    }
+
+    @Get("featured-articles")
+    async featuredArticles() {
+        return await this.articlesService.featuredArticles()
     }
 }
