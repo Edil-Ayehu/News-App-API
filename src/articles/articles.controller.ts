@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { ArticlesService } from './articles.service';
 import { CreateArticleDto } from './dtos/create-article.dto';
 import { GetUser } from 'src/user/decorators/get-user.decorator';
@@ -24,5 +24,18 @@ export class ArticlesController {
     @Get("findAll")
     async findAll() {
         return await this.articlesService.findAll()
+    }
+
+    @Get(':id')
+    async findOne(@Param('id') id: string) {
+        return await this.articlesService.findOne(id)
+    }
+
+    @Delete(":id")
+    async remove(
+        @GetUser() user,
+        @Param('id') articleId: string
+    ) {
+        return await this.articlesService.remove(user.sub, articleId)
     }
 }
