@@ -6,6 +6,7 @@ import { CreateArticleDto } from './dtos/create-article.dto';
 import { User } from 'src/user/entities/user.entity';
 import slugify from 'slugify'
 import { PaginationDto } from 'src/common/dto/pagination.dto';
+import { QueryArticleDto } from './dtos/query-article.dto';
 
 @Injectable()
 export class ArticlesService {
@@ -36,14 +37,43 @@ export class ArticlesService {
         return await this.articleRepo.save(article);
     }
 
-    async findAll(paginationDto: PaginationDto) {
-        const { page, limit} = paginationDto
+    async findAll(queryDto: QueryArticleDto) {
+        const { page, limit, search, author} = queryDto
 
-        const [data, total] =  await this.articleRepo.findAndCount({
-            skip: (page - 1) * limit,
-            take: limit,
-            order: { createdAt: 'DESC'}
-        });
+        const query = this.articleRepo
+        .createQueryBuilder('article')
+        .leftJoinAndSelect('article.author', 'author');
+
+        if (search) {
+            query.andWhere(
+              `
+              LOWER(article.title) LIKE LOWER(:search)
+              OR LOWER(article.summary) LIKE LOWER(:search)
+              OR LOWER(article.content) LIKE LOWER(:search)
+              `,
+              {
+                search: `%${search}%`,
+              }
+            )
+        }
+
+        if (author) {
+            query.andWhere(
+                `
+                LOWER(author.fullName) LIKE LOWER(:author)
+                `,
+                {
+                    author: `%${author}%`
+                }
+            )
+        }
+
+        query.orderBy('article.createdAt', 'DESC');
+
+        query.skip((page - 1) * limit);
+        query.take(limit);
+
+        const [data, total] = await query.getManyAndCount();
 
         return {
             data,

@@ -5,6 +5,7 @@ import { GetUser } from 'src/user/decorators/get-user.decorator';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { UpdateArticleDto } from './dtos/update-article.dto';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
+import { QueryArticleDto } from './dtos/query-article.dto';
 
 @Controller('articles')
 @UseGuards(JwtAuthGuard)
@@ -24,9 +25,9 @@ export class ArticlesController {
 
 
     @Get("findAll")
-    async findAll(@Query() paginationDto: PaginationDto) {
+    async findAll(@Query() queryDto: QueryArticleDto) {
 
-        return await this.articlesService.findAll(paginationDto)
+        return await this.articlesService.findAll(queryDto)
     }
 
     @Get('slug/:slug')
