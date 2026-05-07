@@ -1,9 +1,10 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { ArticlesService } from './articles.service';
 import { CreateArticleDto } from './dtos/create-article.dto';
 import { GetUser } from 'src/user/decorators/get-user.decorator';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { UpdateArticleDto } from './dtos/update-article.dto';
+import { PaginationDto } from 'src/common/dto/pagination.dto';
 
 @Controller('articles')
 @UseGuards(JwtAuthGuard)
@@ -23,8 +24,9 @@ export class ArticlesController {
 
 
     @Get("findAll")
-    async findAll() {
-        return await this.articlesService.findAll()
+    async findAll(@Query() paginationDto: PaginationDto) {
+
+        return await this.articlesService.findAll(paginationDto)
     }
 
     @Get('slug/:slug')
@@ -50,17 +52,17 @@ export class ArticlesController {
     }
 
     @Get("trending-articles")
-    async trendingArticles() {
-        return await this.articlesService.trendingArticles()
+    async trendingArticles(@Query() paginationDto: PaginationDto) {
+        return await this.articlesService.trendingArticles(paginationDto)
     }
 
     @Get("latest-articles")
-    async latestArticles() {
-        return await this.articlesService.latestArticles()
+    async latestArticles(@Query() paginationDto: PaginationDto) {
+        return await this.articlesService.latestArticles(paginationDto)
     }
 
     @Get("featured-articles")
-    async featuredArticles() {
-        return await this.articlesService.featuredArticles()
+    async featuredArticles(@Query() paginationDto: PaginationDto) {
+        return await this.articlesService.featuredArticles(paginationDto)
     }
 }

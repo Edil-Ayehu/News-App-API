@@ -5,6 +5,7 @@ import { Article } from './entities/article.entity';
 import { CreateArticleDto } from './dtos/create-article.dto';
 import { User } from 'src/user/entities/user.entity';
 import slugify from 'slugify'
+import { PaginationDto } from 'src/common/dto/pagination.dto';
 
 @Injectable()
 export class ArticlesService {
@@ -35,11 +36,22 @@ export class ArticlesService {
         return await this.articleRepo.save(article);
     }
 
-    async findAll() {
-        return await this.articleRepo.find({
-            relations: ['author'],
-            order: { createdAt: 'DESC'},
+    async findAll(paginationDto: PaginationDto) {
+        const { page, limit} = paginationDto
+
+        const [data, total] =  await this.articleRepo.findAndCount({
+            skip: (page - 1) * limit,
+            take: limit,
+            order: { createdAt: 'DESC'}
         });
+
+        return {
+            data,
+            total,
+            page,
+            limit,
+            totalPages: Math.ceil(total / limit)
+        }
     }
 
     async findOne(slug: string) {
@@ -100,29 +112,60 @@ export class ArticlesService {
         return await this.articleRepo.save(article);
     }
 
-    async trendingArticles() {
-        return await this.articleRepo.find({
-            order: {viewsCount: 'DESC'},
-            take: 10,
-            relations: ['author'],
-        });
-    }
+    async trendingArticles(paginationDto: PaginationDto) {
+        const { page, limit } = paginationDto
 
-    async latestArticles() {
-        return await this.articleRepo.find({
-            order: {createdAt: 'DESC'},
-            take: 10,
+        const [data, total] = await this.articleRepo.findAndCount({
+            skip: (page - 1) * limit,
+            take: limit,
+            order: { viewsCount: 'DESC'},
             relations: ['author']
         });
+        return {
+            data,
+            total,
+            page,
+            limit,
+            totalPages: Math.ceil(total / limit)
+        }
     }
 
-    async featuredArticles () {
-        return await this.articleRepo.find({
-            where: {isFeatured: true},
+    async latestArticles(paginationDto: PaginationDto) {
+        const { page, limit} = paginationDto
+
+        const [data, total] = await this.articleRepo.findAndCount({
+            skip: (page -1) * limit,
+            take: limit,
             order: {createdAt: 'DESC'},
-            take: 10,
             relations: ['author'],
+        });
+
+        return {
+            data,
+            total,
+            page,
+            limit,
+            totalPages: Math.ceil(total / limit)
+        }
+    }
+
+    async featuredArticles (paginationDto: PaginationDto) {
+        const {page, limit} = paginationDto
+
+        const [ data, total] = await this.articleRepo.findAndCount({
+            skip: (page - 1) * limit,
+            take: limit,
+            order: {createdAt: 'DESC'},
+            relations: ['author']
         })
+
+        return {
+            data,
+            total,
+            page,
+            limit,
+            totalPages: Math.ceil(total / limit)
+        }
     } 
     
 }
