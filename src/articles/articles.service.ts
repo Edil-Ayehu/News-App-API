@@ -7,6 +7,8 @@ import { User } from 'src/user/entities/user.entity';
 import slugify from 'slugify'
 import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { QueryArticleDto } from './dtos/query-article.dto';
+import { Category } from 'src/categories/entities/category.entity';
+import { generateUniqueSlug } from 'src/common/utils/generate-slug';
 
 @Injectable()
 export class ArticlesService {
@@ -15,7 +17,10 @@ export class ArticlesService {
         private articleRepo: Repository<Article>,
 
         @InjectRepository(User)
-        private userRepo: Repository<User>
+        private userRepo: Repository<User>,
+
+        @InjectRepository(Category)
+        private categoryRepo: Repository<Category>
     ) {}
 
     async create(userId: string, dto: CreateArticleDto) {
@@ -25,12 +30,18 @@ export class ArticlesService {
 
         if (!author) throw new NotFoundException("User not found");
 
-        const slug = slugify(dto.title, { lower: true, strict: true});
+        const categories = dto.categoryIds?.length ? 
+                await this.categoryRepo.findByIds(dto.categoryIds) 
+                : [];
+
+        // const slug = slugify(dto.title, { lower: true, strict: true});
+        const slug = await generateUniqueSlug(dto.title, this.articleRepo)
 
         const article = await this.articleRepo.create({
             ...dto,
             slug,
             author,
+            categories,
         })
 
 

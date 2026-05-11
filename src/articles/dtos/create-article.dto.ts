@@ -1,4 +1,4 @@
-import { IsBoolean, IsOptional, IsString } from "class-validator"
+import { IsArray, IsBoolean, IsOptional, IsString } from "class-validator"
 
 export class CreateArticleDto {
     @IsString({message: "Title need to be string"})
@@ -16,4 +16,8 @@ export class CreateArticleDto {
     @IsOptional()
     @IsBoolean()
     isFeatured?: boolean
+
+    @IsOptional()
+    @IsArray()
+    categoryIds?: string[]
 }
