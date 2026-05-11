@@ -1,8 +1,9 @@
 import { Bookmark } from "src/bookmarks/entities/bookmark.entity";
+import { Category } from "src/categories/entities/category.entity";
 import { Comment } from "src/comments/entities/comment.entity";
 import { Like } from "src/likes/entities/like.entity";
 import { User } from "src/user/entities/user.entity";
-import { Column, CreateDateColumn, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, JoinTable, ManyToMany, ManyToOne, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 
 @Entity()
 export class Article {
@@ -41,6 +42,10 @@ export class Article {
 
     @OneToMany(() => Bookmark, (bookmark) => bookmark.article)
     bookmarks: Bookmark[]
+
+    @ManyToMany(() => Category, (category) => category.articles)
+    @JoinTable()
+    categories: Category[]
 
     @CreateDateColumn()
     createdAt: Date

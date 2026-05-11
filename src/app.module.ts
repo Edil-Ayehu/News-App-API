@@ -7,6 +7,7 @@ import { ArticlesModule } from './articles/articles.module';
 import { CommentsModule } from './comments/comments.module';
 import { LikesModule } from './likes/likes.module';
 import { BookmarksModule } from './bookmarks/bookmarks.module';
+import { CategoriesModule } from './categories/categories.module';
 
 @Module({
   imports: [
@@ -29,7 +30,8 @@ import { BookmarksModule } from './bookmarks/bookmarks.module';
     ArticlesModule,
     CommentsModule,
     LikesModule,
-    BookmarksModule
+    BookmarksModule,
+    CategoriesModule
   ],
   controllers: [],
   providers: [],
