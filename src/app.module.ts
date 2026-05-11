@@ -6,6 +6,7 @@ import { UserModule } from './user/user.module';
 import { ArticlesModule } from './articles/articles.module';
 import { CommentsModule } from './comments/comments.module';
 import { LikesModule } from './likes/likes.module';
+import { BookmarksModule } from './bookmarks/bookmarks.module';
 
 @Module({
   imports: [
@@ -27,7 +28,8 @@ import { LikesModule } from './likes/likes.module';
     UserModule,
     ArticlesModule,
     CommentsModule,
-    LikesModule
+    LikesModule,
+    BookmarksModule
   ],
   controllers: [],
   providers: [],

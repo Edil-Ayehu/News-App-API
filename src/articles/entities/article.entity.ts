@@ -1,3 +1,4 @@
+import { Bookmark } from "src/bookmarks/entities/bookmark.entity";
 import { Comment } from "src/comments/entities/comment.entity";
 import { Like } from "src/likes/entities/like.entity";
 import { User } from "src/user/entities/user.entity";
@@ -37,6 +38,9 @@ export class Article {
 
     @OneToMany(() => Like, (like) => like.article)
     likes: Like[]
+
+    @OneToMany(() => Bookmark, (bookmark) => bookmark.article)
+    bookmarks: Bookmark[]
 
     @CreateDateColumn()
     createdAt: Date
