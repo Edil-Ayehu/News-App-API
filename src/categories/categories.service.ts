@@ -77,4 +77,43 @@ export class CategoriesService {
         }
     }
 
+    async findCategoryArticles(
+        categoryId: string,
+        paginationDto: PaginationDto,
+    ) {
+        const {page, limit} = paginationDto
+
+        const category = await this.categoryRepo.findOne({
+            where: {id: categoryId}
+        });
+
+        if (!category) throw new NotFoundException("Category not found");
+
+        const query = this.categoryRepo.createQueryBuilder('category').leftJoinAndSelect(
+            'category.articles',
+            'article',
+        )
+        .leftJoinAndSelect(
+            'article.author',
+            'author',
+        )
+        .where('category.id = :categoryId', {categoryId})
+        .orderBy('article.createdAt', 'DESC');
+
+        query.skip((page -1) * limit)
+        query.take(limit);
+
+        const categoryWithArticles = await query.getOne();
+
+        const articles = categoryWithArticles?.articles || [];
+
+        return {
+            data: articles,
+            total: articles.length,
+            page,
+            limit,
+            totalPages: Math.ceil(articles.length / limit)
+        }
+    }
+
 }

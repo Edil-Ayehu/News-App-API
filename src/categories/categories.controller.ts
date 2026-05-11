@@ -36,4 +36,12 @@ export class CategoriesController {
     ) {
         return await this.categoriesService.remove(categoryId)
     }
+
+    @Get("findCategoryArticles/:categoryId")
+    async findCategoryArticles(
+        @Param('categoryId') categoryId: string,
+        @Query() paginationDto: PaginationDto,
+    ) {
+        return await this.categoriesService.findCategoryArticles(categoryId, paginationDto)
+    }
 }
