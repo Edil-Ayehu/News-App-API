@@ -51,8 +51,12 @@ export class AuthService {
         if(!isMatch) throw new UnauthorizedException("Invalid login credentials")
 
         const accessToken = this.jwtService.sign(
-            {sub: user.id, email: user.email},
-            {expiresIn: '1m'}
+            {
+                sub: user.id, 
+                email: user.email,
+                role: user.role,
+            },
+            {expiresIn: '15m'}
         );
 
         const refreshToken = this.jwtService.sign(

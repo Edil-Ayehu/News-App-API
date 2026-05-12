@@ -1,4 +1,5 @@
 import { Column, CreateDateColumn, Entity, JoinTable, ManyToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { Role } from "../enums/role.enum";
 
 @Entity()
 export class User {
@@ -19,6 +20,13 @@ export class User {
 
   @Column({ nullable: true })
   avatar: string;
+  
+  @Column({
+    type: 'enum',
+    enum: Role,
+    default: Role.ADMIN,
+  })
+  role: Role
 
   @ManyToMany(() => User)
   @JoinTable()
