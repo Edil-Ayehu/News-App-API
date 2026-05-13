@@ -24,7 +24,7 @@ export class ArticlesController {
         @Body() dto: CreateArticleDto,
         @GetUser() user,
     ) {
-        return await this.articlesService.create(user.sub, dto);
+        return await this.articlesService.create(user, dto);
     }
 
 

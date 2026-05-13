@@ -4,6 +4,7 @@ import { Comment } from "src/comments/entities/comment.entity";
 import { Like } from "src/likes/entities/like.entity";
 import { User } from "src/user/entities/user.entity";
 import { Column, CreateDateColumn, Entity, JoinTable, ManyToMany, ManyToOne, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { ArticleStatus } from "../enums/article-status.enum";
 
 @Entity()
 export class Article {
@@ -33,6 +34,13 @@ export class Article {
 
     @ManyToOne(() => User)
     author: User
+
+    @Column({
+        type: 'enum',
+        enum: ArticleStatus,
+        default: ArticleStatus.DRAFT,
+    })
+    status: ArticleStatus
 
     @OneToMany(() => Comment, (comment) => comment.article)
     comments: Comment[]

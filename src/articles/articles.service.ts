@@ -10,6 +10,7 @@ import { QueryArticleDto } from './dtos/query-article.dto';
 import { Category } from 'src/categories/entities/category.entity';
 import { generateUniqueSlug } from 'src/common/utils/generate-slug';
 import { Role } from 'src/user/enums/role.enum';
+import { ArticleStatus } from './enums/article-status.enum';
 
 @Injectable()
 export class ArticlesService {
@@ -24,9 +25,9 @@ export class ArticlesService {
         private categoryRepo: Repository<Category>
     ) {}
 
-    async create(userId: string, dto: CreateArticleDto) {
+    async create(currentUser: any, dto: CreateArticleDto) {
         const author = await this.userRepo.findOne({
-            where: {id: userId}
+            where: {id: currentUser.sub}
         });
 
         if (!author) throw new NotFoundException("User not found");
@@ -38,11 +39,20 @@ export class ArticlesService {
         // const slug = slugify(dto.title, { lower: true, strict: true});
         const slug = await generateUniqueSlug(dto.title, this.articleRepo)
 
+        let status = dto.status || ArticleStatus.DRAFT
+
+        // author can't directly publish article
+        if (currentUser.role === Role.AUTHOR && status === ArticleStatus.PUBLISHED) {
+            status = ArticleStatus.PENDING_REVIEW
+        }
+
+
         const article = await this.articleRepo.create({
             ...dto,
             slug,
             author,
             categories,
+            status,
         })
 
 

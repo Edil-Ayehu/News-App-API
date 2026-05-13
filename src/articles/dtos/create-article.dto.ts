@@ -1,4 +1,5 @@
-import { IsArray, IsBoolean, IsOptional, IsString } from "class-validator"
+import { IsArray, IsBoolean, IsEnum, IsOptional, IsString } from "class-validator"
+import { ArticleStatus } from "../enums/article-status.enum"
 
 export class CreateArticleDto {
     @IsString({message: "Title need to be string"})
@@ -20,4 +21,8 @@ export class CreateArticleDto {
     @IsOptional()
     @IsArray()
     categoryIds?: string[]
+
+    @IsOptional()
+    @IsEnum(ArticleStatus)
+    status?: ArticleStatus
 }
