@@ -45,7 +45,7 @@ export class ArticlesController {
         @GetUser() user,
         @Param('id') articleId: string
     ) {
-        return await this.articlesService.remove(user.sub, articleId)
+        return await this.articlesService.remove(user, articleId)
     }
 
     @Patch(":id")
@@ -55,7 +55,7 @@ export class ArticlesController {
         @Param('id') articleId,
         @Body() dto: UpdateArticleDto,
     ) {
-        return await this.articlesService.update(user.sub, articleId, dto);
+        return await this.articlesService.update(user, articleId, dto);
     }
 
     @Get("trending-articles")

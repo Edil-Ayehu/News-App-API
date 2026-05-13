@@ -9,6 +9,7 @@ import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { QueryArticleDto } from './dtos/query-article.dto';
 import { Category } from 'src/categories/entities/category.entity';
 import { generateUniqueSlug } from 'src/common/utils/generate-slug';
+import { Role } from 'src/user/enums/role.enum';
 
 @Injectable()
 export class ArticlesService {
@@ -113,7 +114,7 @@ export class ArticlesService {
         return article;
     }
 
-    async remove(userId: string, articleId: string) {
+    async remove(currentUser: any, articleId: string) {
         const article = await this.articleRepo.findOne({
             where: {id: articleId},
             relations: ['author'],
@@ -121,9 +122,16 @@ export class ArticlesService {
 
         if (!article) throw new NotFoundException("Article not foud");
 
-        if (article.author.id !== userId) {
+        const isOwner = currentUser.sub === article.author.id
+        const isAdmin = currentUser.role === Role.ADMIN
+
+        if (!isOwner && !isAdmin) {
             throw new ForbiddenException("Not allowed");
         }
+
+        // if (article.author.id !== userId) {
+        //     throw new ForbiddenException("Not allowed");
+        // }
 
         await this.articleRepo.remove(article);
 
@@ -132,7 +140,7 @@ export class ArticlesService {
         }
     }
 
-    async update(userId: string, articleId: string, dto: any) {
+    async update(currentUser: any, articleId: string, dto: any) {
         const article = await this.articleRepo.findOne({
             where: {id: articleId},
             relations: ['author'],
@@ -140,9 +148,16 @@ export class ArticlesService {
 
         if (!article) throw new NotFoundException("Article not found");
 
-        if (article.author.id !== userId) {
-            throw new ForbiddenException("Not allowed");
+        const isOwner = currentUser.sub === article.author.id
+        const isAdmin = currentUser.role === Role.ADMIN
+
+        if (!isAdmin && !isOwner) {
+            throw new ForbiddenException("Not allowed")
         }
+
+        // if (article.author.id !== userId) {
+        //     throw new ForbiddenException("Not allowed");
+        // }
 
         if (dto.title) {
             dto.slug = slugify(dto.title, {lower: true, strict: true});
