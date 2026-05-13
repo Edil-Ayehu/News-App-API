@@ -1,5 +1,6 @@
 import { IsArray, IsBoolean, IsEnum, IsOptional, IsString } from "class-validator"
 import { ArticleStatus } from "../enums/article-status.enum"
+import { Transform } from "class-transformer"
 
 export class CreateArticleDto {
     @IsString({message: "Title need to be string"})
@@ -23,6 +24,9 @@ export class CreateArticleDto {
     categoryIds?: string[]
 
     @IsOptional()
-    @IsEnum(ArticleStatus)
+    @Transform(({value}) => 
+        typeof value === 'string' ? value.toUpperCase() : value
+    )
+    @IsEnum(ArticleStatus, {message: "Invalid article status"})
     status?: ArticleStatus
 }
