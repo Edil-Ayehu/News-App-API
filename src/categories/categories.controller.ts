@@ -27,6 +27,7 @@ export class CategoriesController {
     }
 
     @Patch('update/:categoryId')
+    @Roles(Role.ADMIN)
     async update(
       @Param('categoryId') categoryId: string,
       @Body() dto: UpdateCategoryDto,
@@ -35,6 +36,7 @@ export class CategoriesController {
     }
 
     @Delete('delete/:categoryId')
+    @Roles(Role.ADMIN)
     async remove(
         @Param('categoryId') categoryId: string,
     ) {

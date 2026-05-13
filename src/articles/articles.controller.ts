@@ -6,9 +6,12 @@ import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { UpdateArticleDto } from './dtos/update-article.dto';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { QueryArticleDto } from './dtos/query-article.dto';
+import { RolesGuard } from 'src/auth/guards/roles.guard';
+import { Roles } from 'src/auth/decorators/roles.decorator';
+import { Role } from 'src/user/enums/role.enum';
 
 @Controller('articles')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class ArticlesController {
     constructor(
         private articlesService: ArticlesService
@@ -16,6 +19,7 @@ export class ArticlesController {
 
 
     @Post("create")
+    @Roles(Role.ADMIN, Role.AUTHOR)
     async create(
         @Body() dto: CreateArticleDto,
         @GetUser() user,
@@ -36,6 +40,7 @@ export class ArticlesController {
     }
 
     @Delete(":id")
+    @Roles(Role.ADMIN, Role.AUTHOR)
     async remove(
         @GetUser() user,
         @Param('id') articleId: string
@@ -44,6 +49,7 @@ export class ArticlesController {
     }
 
     @Patch(":id")
+    @Roles(Role.ADMIN, Role.AUTHOR)
     async update(
         @GetUser() user,
         @Param('id') articleId,
