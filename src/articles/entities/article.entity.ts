@@ -35,6 +35,12 @@ export class Article {
     @ManyToOne(() => User)
     author: User
 
+
+    @Column({
+        default: 1,
+    })
+    readingTime: number  // reading time generated automatically by calculating based on content-length
+
     @Column({
         type: 'enum',
         enum: ArticleStatus,

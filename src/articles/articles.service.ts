@@ -11,6 +11,7 @@ import { Category } from 'src/categories/entities/category.entity';
 import { generateUniqueSlug } from 'src/common/utils/generate-slug';
 import { Role } from 'src/user/enums/role.enum';
 import { ArticleStatus } from './enums/article-status.enum';
+import { calculateReadingTime } from 'src/common/utils/calculate-reading-time';
 
 @Injectable()
 export class ArticlesService {
@@ -39,6 +40,8 @@ export class ArticlesService {
         // const slug = slugify(dto.title, { lower: true, strict: true});
         const slug = await generateUniqueSlug(dto.title, this.articleRepo)
 
+        const readingTime = calculateReadingTime(dto.content)
+
         let status = dto.status || ArticleStatus.DRAFT
 
         // author can't directly publish article
@@ -53,7 +56,8 @@ export class ArticlesService {
             author,
             categories,
             status,
-        })
+            readingTime,
+        });
 
 
         return await this.articleRepo.save(article);
@@ -139,10 +143,6 @@ export class ArticlesService {
             throw new ForbiddenException("Not allowed");
         }
 
-        // if (article.author.id !== userId) {
-        //     throw new ForbiddenException("Not allowed");
-        // }
-
         await this.articleRepo.remove(article);
 
         return {
@@ -165,9 +165,9 @@ export class ArticlesService {
             throw new ForbiddenException("Not allowed")
         }
 
-        // if (article.author.id !== userId) {
-        //     throw new ForbiddenException("Not allowed");
-        // }
+        if (dto.content) {
+            article.readingTime = calculateReadingTime(article.content)
+        }
 
         if (dto.title) {
             dto.slug = slugify(dto.title, {lower: true, strict: true});
