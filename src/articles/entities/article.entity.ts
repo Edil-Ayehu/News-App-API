@@ -41,6 +41,12 @@ export class Article {
     })
     readingTime: number  // reading time generated automatically by calculating based on content-length
 
+    @Column('text', {
+        array: true,
+        default: [],
+    })
+    tags: string[]
+
     @Column({
         type: 'enum',
         enum: ArticleStatus,

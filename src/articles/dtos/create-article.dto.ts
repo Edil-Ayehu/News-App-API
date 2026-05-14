@@ -1,4 +1,4 @@
-import { IsArray, IsBoolean, IsEnum, IsOptional, IsString } from "class-validator"
+import { ArrayUnique, IsArray, IsBoolean, IsEnum, IsOptional, IsString } from "class-validator"
 import { ArticleStatus } from "../enums/article-status.enum"
 import { Transform } from "class-transformer"
 
@@ -22,6 +22,19 @@ export class CreateArticleDto {
     @IsOptional()
     @IsArray()
     categoryIds?: string[]
+
+    @IsOptional()
+    @Transform(({ value }) =>
+    Array.isArray(value)
+        ? value.map((tag) =>
+              tag.toLowerCase().trim(),
+          )
+        : value
+    )
+    @IsArray()
+    @ArrayUnique()
+    @IsString({each: true})
+    tags: string[]
 
     @IsOptional()
     @Transform(({value}) => 
