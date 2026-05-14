@@ -49,6 +49,12 @@ export class ArticlesService {
             status = ArticleStatus.PENDING_REVIEW
         }
 
+        let publishedAt : Date | null = null
+
+        if (status === ArticleStatus.PUBLISHED) {
+             publishedAt = new Date()
+        }
+
 
         const article = await this.articleRepo.create({
             ...dto,
@@ -57,6 +63,7 @@ export class ArticlesService {
             categories,
             status,
             readingTime,
+            publishedAt,
         });
 
 
@@ -171,6 +178,14 @@ export class ArticlesService {
 
         if (dto.title) {
             dto.slug = slugify(dto.title, {lower: true, strict: true});
+        }
+
+        if (dto.status === ArticleStatus.PUBLISHED && article.status !== ArticleStatus.PUBLISHED) {
+            article.publishedAt = new Date()
+        }
+
+        if (dto.status === ArticleStatus.ARCHIVED) {
+            article.publishedAt = null
         }
 
         Object.assign(article, dto)

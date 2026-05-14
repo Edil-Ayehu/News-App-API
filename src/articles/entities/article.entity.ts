@@ -67,6 +67,12 @@ export class Article {
     @JoinTable()
     categories: Category[]
 
+    @Column({
+        type: 'timestamp',
+        nullable: true,
+    })
+    publishedAt: Date | null
+
     @CreateDateColumn()
     createdAt: Date
 
