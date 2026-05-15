@@ -80,4 +80,12 @@ export class ArticlesController {
     ) {
         return await this.articlesService.pendingReviewArticles(dto)
     }
+
+    @Patch("approve-article/:articleId")
+    @Roles(Role.ADMIN)
+    async approveArticle(
+        @Param('articleId') articleId: string,
+    ) {
+        return await this.articlesService.approveArticle(articleId)
+    }
 }

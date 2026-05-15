@@ -278,5 +278,30 @@ export class ArticlesService {
             totalPages: Math.ceil(total / limit)
         }
     }
+
+    async approveArticle(articleId: string) {
+        const article = await this.articleRepo.findOne({
+            where: {id: articleId}
+        });
+
+        if (!article) throw new NotFoundException("Article not found");
+
+        if (article.status !== ArticleStatus.PENDING_REVIEW) {
+            throw new ForbiddenException("Only pending review articles can be approved")
+        }
+
+        // status updated to PUblished
+        article.status = ArticleStatus.PUBLISHED;
+
+        // published time also updated
+        article.publishedAt = new Date()
+
+        await this.articleRepo.save(article)
+
+        return {
+            message: "Article approved successfully",
+            article,
+        }
+    }
     
 }
