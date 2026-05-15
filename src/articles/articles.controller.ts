@@ -88,4 +88,12 @@ export class ArticlesController {
     ) {
         return await this.articlesService.approveArticle(articleId)
     }
+
+     @Patch("reject-article/:articleId")
+    @Roles(Role.ADMIN)
+    async rejectArticle(
+        @Param('articleId') articleId: string,
+    ) {
+        return await this.articlesService.rejectArticle(articleId)
+    }
 }

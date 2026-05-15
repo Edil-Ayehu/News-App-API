@@ -303,5 +303,27 @@ export class ArticlesService {
             article,
         }
     }
+
+    async rejectArticle(articleId: string) {
+        const article = await this.articleRepo.findOne({
+            where: {id: articleId}
+        });
+
+        if (!article) throw new NotFoundException("Article not found")
+
+        if (article.status !== ArticleStatus.PENDING_REVIEW) {
+            throw new ForbiddenException("Only pending review articles can be rejected");
+        }
+
+        // status updated to rejected
+        article.status = ArticleStatus.REJECTED
+
+        await this.articleRepo.save(article)
+
+        return {
+            message: "Article rejected successfully",
+            article,
+        }
+    }
     
 }
