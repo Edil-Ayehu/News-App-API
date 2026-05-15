@@ -89,6 +89,14 @@ export class ArticlesController {
         return await this.articlesService.publishedArticles(dto)
     }
 
+    @Get('rejected-articles')
+    @Roles(Role.ADMIN)
+    async rejectedArticles (
+        @Query() dto: PaginationDto,
+    ) {
+        return await this.articlesService.rejectedArticles(dto)
+    }
+
     @Patch("approve-article/:articleId")
     @Roles(Role.ADMIN)
     async approveArticle(

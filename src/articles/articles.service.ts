@@ -300,6 +300,26 @@ export class ArticlesService {
         }
     }
 
+    async rejectedArticles(dto: PaginationDto) {
+        const {page, limit} = dto
+
+        const [data, total] = await this.articleRepo.findAndCount({
+            where: {status: ArticleStatus.REJECTED},
+            relations: ['author', 'categories'],
+            skip: (page - 1) * limit,
+            take: limit,
+            order: { createdAt: 'DESC'},
+        });
+
+        return {
+            data,
+            total,
+            page,
+            limit,
+            totalPages: Math.ceil(total / limit)
+        }
+    }
+
     async approveArticle(articleId: string) {
         const article = await this.articleRepo.findOne({
             where: {id: articleId}
