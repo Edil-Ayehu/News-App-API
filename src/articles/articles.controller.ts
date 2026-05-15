@@ -9,6 +9,7 @@ import { QueryArticleDto } from './dtos/query-article.dto';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { Role } from 'src/user/enums/role.enum';
+import { RejectArticleDto } from './dtos/reject-article.dto';
 
 @Controller('articles')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -89,11 +90,17 @@ export class ArticlesController {
         return await this.articlesService.approveArticle(articleId)
     }
 
-     @Patch("reject-article/:articleId")
+    @Patch("reject-article/:articleId")
     @Roles(Role.ADMIN)
     async rejectArticle(
         @Param('articleId') articleId: string,
+        @Body() dto: RejectArticleDto,
+        @GetUser() user,
     ) {
-        return await this.articlesService.rejectArticle(articleId)
+        return await this.articlesService.rejectArticle(
+            articleId, 
+            user.sub, 
+            dto.rejectionReason,
+        );
     }
 }

@@ -12,6 +12,7 @@ import { generateUniqueSlug } from 'src/common/utils/generate-slug';
 import { Role } from 'src/user/enums/role.enum';
 import { ArticleStatus } from './enums/article-status.enum';
 import { calculateReadingTime } from 'src/common/utils/calculate-reading-time';
+import { RejectArticleDto } from './dtos/reject-article.dto';
 
 @Injectable()
 export class ArticlesService {
@@ -304,7 +305,13 @@ export class ArticlesService {
         }
     }
 
-    async rejectArticle(articleId: string) {
+    async rejectArticle(articleId: string, adminId: string, rejectionReason: string) {
+        const admin = await this.userRepo.findOne({
+            where: {id: adminId},
+        });
+
+        if (!admin) throw new NotFoundException("User not found");
+
         const article = await this.articleRepo.findOne({
             where: {id: articleId}
         });
@@ -317,6 +324,9 @@ export class ArticlesService {
 
         // status updated to rejected
         article.status = ArticleStatus.REJECTED
+        article.rejectionReason = rejectionReason
+        article.reviewedBy = admin
+        article.reviewedAt = new Date()
 
         await this.articleRepo.save(article)
 

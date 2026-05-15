@@ -68,6 +68,21 @@ export class Article {
     categories: Category[]
 
     @Column({
+        type: 'text',
+        nullable: true,
+    })
+    rejectionReason: string | null
+
+    @ManyToOne(() => User, {nullable: true})
+    reviewedBy: User | null
+
+    @Column({
+        type: 'timestamp',
+        nullable: true,
+    })
+    reviewedAt: Date | null
+
+    @Column({
         type: 'timestamp',
         nullable: true,
     })
