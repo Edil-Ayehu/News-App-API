@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Article } from './entities/article.entity';
@@ -248,5 +248,35 @@ export class ArticlesService {
             totalPages: Math.ceil(total / limit)
         }
     } 
+
+    async pendingReviewArticles(paginationDto: PaginationDto) {
+        const { page, limit} = paginationDto
+
+        // const user = await this.userRepo.findOne({
+        //     where: {id: userId}
+        // });
+
+        // if (!user) throw new BadRequestException("User not found");
+
+        // const isAdmin = user.role === Role.ADMIN
+
+        // if (!isAdmin) throw new ForbiddenException("Only Admin can view pending articles.")
+
+        const [data, total] = await this.articleRepo.findAndCount({
+            where: {status: ArticleStatus.PENDING_REVIEW},
+            relations: ['author', 'categories'],
+            skip: (page - 1) * limit,
+            take: limit,
+            order: { createdAt: 'DESC'},
+        });
+
+        return {
+            data,
+            total,
+            page,
+            limit,
+            totalPages: Math.ceil(total / limit)
+        }
+    }
     
 }

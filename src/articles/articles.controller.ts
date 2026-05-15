@@ -72,4 +72,12 @@ export class ArticlesController {
     async featuredArticles(@Query() paginationDto: PaginationDto) {
         return await this.articlesService.featuredArticles(paginationDto)
     }
+
+    @Get('pending-review-articles')
+    @Roles(Role.ADMIN)
+    async pendingReviewArticles(
+        @Query() dto: PaginationDto,
+    ) {
+        return await this.articlesService.pendingReviewArticles(dto)
+    }
 }
