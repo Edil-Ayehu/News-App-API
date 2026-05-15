@@ -250,7 +250,7 @@ export class ArticlesService {
         }
     } 
 
-    async pendingReviewArticles(paginationDto: PaginationDto) {
+    async fetchPendingReviewArticles(paginationDto: PaginationDto) {
         const { page, limit} = paginationDto
 
         // const user = await this.userRepo.findOne({
@@ -280,7 +280,7 @@ export class ArticlesService {
         }
     }
 
-    async publishedArticles(dto: PaginationDto) {
+    async fetchPublishedArticles(dto: PaginationDto) {
         const {page, limit} = dto
 
         const [data, total] = await this.articleRepo.findAndCount({
@@ -300,7 +300,7 @@ export class ArticlesService {
         }
     }
 
-    async rejectedArticles(dto: PaginationDto) {
+    async fetchRejectedArticles(dto: PaginationDto) {
         const {page, limit} = dto
 
         const [data, total] = await this.articleRepo.findAndCount({

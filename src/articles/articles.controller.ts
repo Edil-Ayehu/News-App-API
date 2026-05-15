@@ -74,27 +74,27 @@ export class ArticlesController {
         return await this.articlesService.featuredArticles(paginationDto)
     }
 
-    @Get('pending-review-articles')
+    @Get('fetch-pending-review-articles')
     @Roles(Role.ADMIN)
-    async pendingReviewArticles(
+    async fetchPendingReviewArticles(
         @Query() dto: PaginationDto,
     ) {
-        return await this.articlesService.pendingReviewArticles(dto)
+        return await this.articlesService.fetchPendingReviewArticles(dto)
     }
 
-    @Get('published-articles')
-    async publishedArticles (
+    @Get('fetch-published-articles')
+    async fetchPublishedArticles (
         @Query() dto: PaginationDto,
     ) {
-        return await this.articlesService.publishedArticles(dto)
+        return await this.articlesService.fetchPublishedArticles(dto)
     }
 
-    @Get('rejected-articles')
+    @Get('fetch-rejected-articles')
     @Roles(Role.ADMIN)
-    async rejectedArticles (
+    async fetchRejectedArticles (
         @Query() dto: PaginationDto,
     ) {
-        return await this.articlesService.rejectedArticles(dto)
+        return await this.articlesService.fetchRejectedArticles(dto)
     }
 
     @Patch("approve-article/:articleId")
