@@ -1,10 +1,15 @@
-import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Article } from './entities/article.entity';
 import { CreateArticleDto } from './dtos/create-article.dto';
 import { User } from 'src/user/entities/user.entity';
-import slugify from 'slugify'
+import slugify from 'slugify';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { QueryArticleDto } from './dtos/query-article.dto';
 import { Category } from 'src/categories/entities/category.entity';
@@ -13,367 +18,432 @@ import { Role } from 'src/user/enums/role.enum';
 import { ArticleStatus } from './enums/article-status.enum';
 import { calculateReadingTime } from 'src/common/utils/calculate-reading-time';
 import { RejectArticleDto } from './dtos/reject-article.dto';
+import { ReadingHistory } from './entities/reading-history.entity';
 
 @Injectable()
 export class ArticlesService {
-    constructor(
-        @InjectRepository(Article)
-        private articleRepo: Repository<Article>,
+  constructor(
+    @InjectRepository(Article)
+    private articleRepo: Repository<Article>,
 
-        @InjectRepository(User)
-        private userRepo: Repository<User>,
+    @InjectRepository(User)
+    private userRepo: Repository<User>,
 
-        @InjectRepository(Category)
-        private categoryRepo: Repository<Category>
-    ) {}
+    @InjectRepository(Category)
+    private categoryRepo: Repository<Category>,
 
-    async create(currentUser: any, dto: CreateArticleDto) {
-        const author = await this.userRepo.findOne({
-            where: {id: currentUser.sub}
-        });
+    @InjectRepository(ReadingHistory)
+    private readingHistoryRepo: Repository<ReadingHistory>,
+  ) {}
 
-        if (!author) throw new NotFoundException("User not found");
+  async create(currentUser: any, dto: CreateArticleDto) {
+    const author = await this.userRepo.findOne({
+      where: { id: currentUser.sub },
+    });
 
-        const categories = dto.categoryIds?.length ? 
-                await this.categoryRepo.findByIds(dto.categoryIds) 
-                : [];
+    if (!author) throw new NotFoundException('User not found');
 
-        // const slug = slugify(dto.title, { lower: true, strict: true});
-        const slug = await generateUniqueSlug(dto.title, this.articleRepo)
+    const categories = dto.categoryIds?.length
+      ? await this.categoryRepo.findByIds(dto.categoryIds)
+      : [];
 
-        const readingTime = calculateReadingTime(dto.content)
+    // const slug = slugify(dto.title, { lower: true, strict: true});
+    const slug = await generateUniqueSlug(dto.title, this.articleRepo);
 
-        let status = dto.status || ArticleStatus.DRAFT
+    const readingTime = calculateReadingTime(dto.content);
 
-        // author can't directly publish article
-        if (currentUser.role === Role.AUTHOR && status === ArticleStatus.PUBLISHED) {
-            status = ArticleStatus.PENDING_REVIEW
-        }
+    let status = dto.status || ArticleStatus.DRAFT;
 
-        let publishedAt : Date | null = null
-
-        if (status === ArticleStatus.PUBLISHED) {
-             publishedAt = new Date()
-        }
-
-
-        const article = await this.articleRepo.create({
-            ...dto,
-            slug,
-            author,
-            categories,
-            status,
-            readingTime,
-            publishedAt,
-        });
-
-
-        return await this.articleRepo.save(article);
+    // author can't directly publish article
+    if (
+      currentUser.role === Role.AUTHOR &&
+      status === ArticleStatus.PUBLISHED
+    ) {
+      status = ArticleStatus.PENDING_REVIEW;
     }
 
-    async findAll(queryDto: QueryArticleDto) {
-        const { page, limit, search, author} = queryDto
+    let publishedAt: Date | null = null;
 
-        const query = this.articleRepo
-        .createQueryBuilder('article')
-        .leftJoinAndSelect('article.author', 'author');
+    if (status === ArticleStatus.PUBLISHED) {
+      publishedAt = new Date();
+    }
 
-        if (search) {
-            query.andWhere(
-              `
+    const article = await this.articleRepo.create({
+      ...dto,
+      slug,
+      author,
+      categories,
+      status,
+      readingTime,
+      publishedAt,
+    });
+
+    return await this.articleRepo.save(article);
+  }
+
+  async findAll(queryDto: QueryArticleDto) {
+    const { page, limit, search, author } = queryDto;
+
+    const query = this.articleRepo
+      .createQueryBuilder('article')
+      .leftJoinAndSelect('article.author', 'author');
+
+    if (search) {
+      query.andWhere(
+        `
               LOWER(article.title) LIKE LOWER(:search)
               OR LOWER(article.summary) LIKE LOWER(:search)
               OR LOWER(article.content) LIKE LOWER(:search)
               `,
-              {
-                search: `%${search}%`,
-              }
-            )
-        }
+        {
+          search: `%${search}%`,
+        },
+      );
+    }
 
-        if (author) {
-            query.andWhere(
-                `
+    if (author) {
+      query.andWhere(
+        `
                 LOWER(author.fullName) LIKE LOWER(:author)
                 `,
-                {
-                    author: `%${author}%`
-                }
-            )
-        }
-
-        query.orderBy('article.createdAt', 'DESC');
-
-        query.skip((page - 1) * limit);
-        query.take(limit);
-
-        const [data, total] = await query.getManyAndCount();
-
-        return {
-            data,
-            total,
-            page,
-            limit,
-            totalPages: Math.ceil(total / limit)
-        }
+        {
+          author: `%${author}%`,
+        },
+      );
     }
 
-    async findOne(slug: string) {
-        // instead of exposing IDs, using slug is much easier for users to read, share, and remember
-        // and also better for search engine optimization : Search engines like Google prefer meaningful URLs
-        const article = await this.articleRepo.findOne({
-            where: {slug: slug},
-            relations: ['author'],
-        });
+    query.orderBy('article.createdAt', 'DESC');
 
-        if (!article) throw new NotFoundException("Article Not Found");
+    query.skip((page - 1) * limit);
+    query.take(limit);
 
-        article.viewsCount += 1;
+    const [data, total] = await query.getManyAndCount();
 
-        await this.articleRepo.save(article);
+    return {
+      data,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
 
+  async findOne(slug: string, currentUser?: any) {
+    // instead of exposing IDs, using slug is much easier for users to read, share, and remember
+    // and also better for search engine optimization : Search engines like Google prefer meaningful URLs
+    const article = await this.articleRepo.findOne({
+      where: { slug: slug },
+      relations: ['author'],
+    });
 
-        return article;
-    }
+    if (!article) throw new NotFoundException('Article Not Found');
 
-    async remove(currentUser: any, articleId: string) {
-        const article = await this.articleRepo.findOne({
-            where: {id: articleId},
-            relations: ['author'],
-        });
+    article.viewsCount += 1;
 
-        if (!article) throw new NotFoundException("Article not foud");
+    await this.articleRepo.save(article);
 
-        const isOwner = currentUser.sub === article.author.id
-        const isAdmin = currentUser.role === Role.ADMIN
+    // save reading history if user logged in
+    if (currentUser?.sub) {
+      const user = await this.userRepo.findOne({
+        where: { id: currentUser.sub },
+      });
 
-        if (!isOwner && !isAdmin) {
-            throw new ForbiddenException("Not allowed");
-        }
+      if (user) {
+        let history = await this.readingHistoryRepo
+          .createQueryBuilder('history')
+          .leftJoinAndSelect('history.user', 'user')
+          .leftJoinAndSelect('history.article', 'article')
+          .where('user.id = :userId', { userId: user.id })
+          .andWhere('article.id = :articleId', { articleId: article.id })
+          .getOne();
 
-        await this.articleRepo.remove(article);
-
-        return {
-            message: "Article deleted successfully",
-        }
-    }
-
-    async update(currentUser: any, articleId: string, dto: any) {
-        const article = await this.articleRepo.findOne({
-            where: {id: articleId},
-            relations: ['author'],
-        });
-
-        if (!article) throw new NotFoundException("Article not found");
-
-        const isOwner = currentUser.sub === article.author.id
-        const isAdmin = currentUser.role === Role.ADMIN
-
-        if (!isAdmin && !isOwner) {
-            throw new ForbiddenException("Not allowed")
-        }
-
-        if (dto.content) {
-            article.readingTime = calculateReadingTime(article.content)
-        }
-
-        if (dto.title) {
-            dto.slug = slugify(dto.title, {lower: true, strict: true});
-        }
-
-        if (dto.status === ArticleStatus.PUBLISHED && article.status !== ArticleStatus.PUBLISHED) {
-            article.publishedAt = new Date()
-        }
-
-        if (dto.status === ArticleStatus.ARCHIVED) {
-            article.publishedAt = null
-        }
-
-        Object.assign(article, dto)
-
-        return await this.articleRepo.save(article);
-    }
-
-    async trendingArticles(paginationDto: PaginationDto) {
-        const { page, limit } = paginationDto
-
-        const [data, total] = await this.articleRepo.findAndCount({
-            skip: (page - 1) * limit,
-            take: limit,
-            order: { viewsCount: 'DESC'},
-            relations: ['author']
-        });
-        return {
-            data,
-            total,
-            page,
-            limit,
-            totalPages: Math.ceil(total / limit)
-        }
-    }
-
-    async latestArticles(paginationDto: PaginationDto) {
-        const { page, limit} = paginationDto
-
-        const [data, total] = await this.articleRepo.findAndCount({
-            skip: (page -1) * limit,
-            take: limit,
-            order: {createdAt: 'DESC'},
-            relations: ['author'],
-        });
-
-        return {
-            data,
-            total,
-            page,
-            limit,
-            totalPages: Math.ceil(total / limit)
-        }
-    }
-
-    async featuredArticles (paginationDto: PaginationDto) {
-        const {page, limit} = paginationDto
-
-        const [ data, total] = await this.articleRepo.findAndCount({
-            skip: (page - 1) * limit,
-            take: limit,
-            order: {createdAt: 'DESC'},
-            relations: ['author']
-        })
-
-        return {
-            data,
-            total,
-            page,
-            limit,
-            totalPages: Math.ceil(total / limit)
-        }
-    } 
-
-    async fetchPendingReviewArticles(paginationDto: PaginationDto) {
-        const { page, limit} = paginationDto
-
-        // const user = await this.userRepo.findOne({
-        //     where: {id: userId}
-        // });
-
-        // if (!user) throw new BadRequestException("User not found");
-
-        // const isAdmin = user.role === Role.ADMIN
-
-        // if (!isAdmin) throw new ForbiddenException("Only Admin can view pending articles.")
-
-        const [data, total] = await this.articleRepo.findAndCount({
-            where: {status: ArticleStatus.PENDING_REVIEW},
-            relations: ['author', 'categories'],
-            skip: (page - 1) * limit,
-            take: limit,
-            order: { createdAt: 'DESC'},
-        });
-
-        return {
-            data,
-            total,
-            page,
-            limit,
-            totalPages: Math.ceil(total / limit)
-        }
-    }
-
-    async fetchPublishedArticles(dto: PaginationDto) {
-        const {page, limit} = dto
-
-        const [data, total] = await this.articleRepo.findAndCount({
-            where: {status: ArticleStatus.PUBLISHED},
-            relations: ['author', 'categories'],
-            skip: (page - 1) * limit,
-            take: limit,
-            order: { createdAt: 'DESC'},
-        });
-
-        return {
-            data,
-            total,
-            page,
-            limit,
-            totalPages: Math.ceil(total / limit)
-        }
-    }
-
-    async fetchRejectedArticles(dto: PaginationDto) {
-        const {page, limit} = dto
-
-        const [data, total] = await this.articleRepo.findAndCount({
-            where: {status: ArticleStatus.REJECTED},
-            relations: ['author', 'categories'],
-            skip: (page - 1) * limit,
-            take: limit,
-            order: { createdAt: 'DESC'},
-        });
-
-        return {
-            data,
-            total,
-            page,
-            limit,
-            totalPages: Math.ceil(total / limit)
-        }
-    }
-
-    async approveArticle(articleId: string) {
-        const article = await this.articleRepo.findOne({
-            where: {id: articleId}
-        });
-
-        if (!article) throw new NotFoundException("Article not found");
-
-        if (article.status !== ArticleStatus.PENDING_REVIEW) {
-            throw new ForbiddenException("Only pending review articles can be approved")
-        }
-
-        // status updated to PUblished
-        article.status = ArticleStatus.PUBLISHED;
-
-        // published time also updated
-        article.publishedAt = new Date()
-
-        await this.articleRepo.save(article)
-
-        return {
-            message: "Article approved successfully",
+        if (history) {
+          history.lastViewedAt = new Date();
+          history.viewsCount += 1;
+        } else {
+          history = this.readingHistoryRepo.create({
+            user,
             article,
+            viewsCount: 1,
+            lastViewedAt: new Date(),
+          });
         }
+
+        await this.readingHistoryRepo.save(history);
+      }
     }
 
-    async rejectArticle(articleId: string, adminId: string, rejectionReason: string) {
-        const admin = await this.userRepo.findOne({
-            where: {id: adminId},
-        });
+    return article;
+  }
 
-        if (!admin) throw new NotFoundException("User not found");
+  async remove(currentUser: any, articleId: string) {
+    const article = await this.articleRepo.findOne({
+      where: { id: articleId },
+      relations: ['author'],
+    });
 
-        const article = await this.articleRepo.findOne({
-            where: {id: articleId}
-        });
+    if (!article) throw new NotFoundException('Article not foud');
 
-        if (!article) throw new NotFoundException("Article not found")
+    const isOwner = currentUser.sub === article.author.id;
+    const isAdmin = currentUser.role === Role.ADMIN;
 
-        if (article.status !== ArticleStatus.PENDING_REVIEW) {
-            throw new ForbiddenException("Only pending review articles can be rejected");
-        }
-
-        // status updated to rejected
-        article.status = ArticleStatus.REJECTED
-        article.rejectionReason = rejectionReason
-        article.reviewedBy = admin
-        article.reviewedAt = new Date()
-
-        await this.articleRepo.save(article)
-
-        return {
-            message: "Article rejected successfully",
-            article,
-        }
+    if (!isOwner && !isAdmin) {
+      throw new ForbiddenException('Not allowed');
     }
-    
+
+    await this.articleRepo.remove(article);
+
+    return {
+      message: 'Article deleted successfully',
+    };
+  }
+
+  async update(currentUser: any, articleId: string, dto: any) {
+    const article = await this.articleRepo.findOne({
+      where: { id: articleId },
+      relations: ['author'],
+    });
+
+    if (!article) throw new NotFoundException('Article not found');
+
+    const isOwner = currentUser.sub === article.author.id;
+    const isAdmin = currentUser.role === Role.ADMIN;
+
+    if (!isAdmin && !isOwner) {
+      throw new ForbiddenException('Not allowed');
+    }
+
+    if (dto.content) {
+      article.readingTime = calculateReadingTime(article.content);
+    }
+
+    if (dto.title) {
+      dto.slug = slugify(dto.title, { lower: true, strict: true });
+    }
+
+    if (
+      dto.status === ArticleStatus.PUBLISHED &&
+      article.status !== ArticleStatus.PUBLISHED
+    ) {
+      article.publishedAt = new Date();
+    }
+
+    if (dto.status === ArticleStatus.ARCHIVED) {
+      article.publishedAt = null;
+    }
+
+    Object.assign(article, dto);
+
+    return await this.articleRepo.save(article);
+  }
+
+  async trendingArticles(paginationDto: PaginationDto) {
+    const { page, limit } = paginationDto;
+
+    const [data, total] = await this.articleRepo.findAndCount({
+      skip: (page - 1) * limit,
+      take: limit,
+      order: { viewsCount: 'DESC' },
+      relations: ['author'],
+    });
+    return {
+      data,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
+
+  async latestArticles(paginationDto: PaginationDto) {
+    const { page, limit } = paginationDto;
+
+    const [data, total] = await this.articleRepo.findAndCount({
+      skip: (page - 1) * limit,
+      take: limit,
+      order: { createdAt: 'DESC' },
+      relations: ['author'],
+    });
+
+    return {
+      data,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
+
+  async featuredArticles(paginationDto: PaginationDto) {
+    const { page, limit } = paginationDto;
+
+    const [data, total] = await this.articleRepo.findAndCount({
+      skip: (page - 1) * limit,
+      take: limit,
+      order: { createdAt: 'DESC' },
+      relations: ['author'],
+    });
+
+    return {
+      data,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
+
+  async fetchPendingReviewArticles(paginationDto: PaginationDto) {
+    const { page, limit } = paginationDto;
+
+    // const user = await this.userRepo.findOne({
+    //     where: {id: userId}
+    // });
+
+    // if (!user) throw new BadRequestException("User not found");
+
+    // const isAdmin = user.role === Role.ADMIN
+
+    // if (!isAdmin) throw new ForbiddenException("Only Admin can view pending articles.")
+
+    const [data, total] = await this.articleRepo.findAndCount({
+      where: { status: ArticleStatus.PENDING_REVIEW },
+      relations: ['author', 'categories'],
+      skip: (page - 1) * limit,
+      take: limit,
+      order: { createdAt: 'DESC' },
+    });
+
+    return {
+      data,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
+
+  async fetchPublishedArticles(dto: PaginationDto) {
+    const { page, limit } = dto;
+
+    const [data, total] = await this.articleRepo.findAndCount({
+      where: { status: ArticleStatus.PUBLISHED },
+      relations: ['author', 'categories'],
+      skip: (page - 1) * limit,
+      take: limit,
+      order: { createdAt: 'DESC' },
+    });
+
+    return {
+      data,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
+
+  async fetchRejectedArticles(dto: PaginationDto) {
+    const { page, limit } = dto;
+
+    const [data, total] = await this.articleRepo.findAndCount({
+      where: { status: ArticleStatus.REJECTED },
+      relations: ['author', 'categories'],
+      skip: (page - 1) * limit,
+      take: limit,
+      order: { createdAt: 'DESC' },
+    });
+
+    return {
+      data,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
+
+  async approveArticle(articleId: string) {
+    const article = await this.articleRepo.findOne({
+      where: { id: articleId },
+    });
+
+    if (!article) throw new NotFoundException('Article not found');
+
+    if (article.status !== ArticleStatus.PENDING_REVIEW) {
+      throw new ForbiddenException(
+        'Only pending review articles can be approved',
+      );
+    }
+
+    // status updated to PUblished
+    article.status = ArticleStatus.PUBLISHED;
+
+    // published time also updated
+    article.publishedAt = new Date();
+
+    await this.articleRepo.save(article);
+
+    return {
+      message: 'Article approved successfully',
+      article,
+    };
+  }
+
+  async rejectArticle(
+    articleId: string,
+    adminId: string,
+    rejectionReason: string,
+  ) {
+    const admin = await this.userRepo.findOne({
+      where: { id: adminId },
+    });
+
+    if (!admin) throw new NotFoundException('User not found');
+
+    const article = await this.articleRepo.findOne({
+      where: { id: articleId },
+    });
+
+    if (!article) throw new NotFoundException('Article not found');
+
+    if (article.status !== ArticleStatus.PENDING_REVIEW) {
+      throw new ForbiddenException(
+        'Only pending review articles can be rejected',
+      );
+    }
+
+    // status updated to rejected
+    article.status = ArticleStatus.REJECTED;
+    article.rejectionReason = rejectionReason;
+    article.reviewedBy = admin;
+    article.reviewedAt = new Date();
+
+    await this.articleRepo.save(article);
+
+    return {
+      message: 'Article rejected successfully',
+      article,
+    };
+  }
+
+  async fetchReadingHistory(currentUser: any, paginationDto: PaginationDto) {
+    const { page, limit } = paginationDto;
+
+    const [data, total] = await this.readingHistoryRepo.findAndCount({
+      where: { user: { id: currentUser.sub } },
+      relations: ['article', 'article.author', 'article.categories'],
+      order: { lastViewedAt: 'DESC' },
+      skip: (page - 1) * limit,
+      take: limit,
+    });
+
+    return {
+      data,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
 }

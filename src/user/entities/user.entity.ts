@@ -1,5 +1,6 @@
-import { Column, CreateDateColumn, Entity, JoinTable, ManyToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, JoinTable, ManyToMany, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 import { Role } from "../enums/role.enum";
+import { ReadingHistory } from "src/articles/entities/reading-history.entity";
 
 @Entity()
 export class User {
@@ -27,6 +28,9 @@ export class User {
     default: Role.USER,
   })
   role: Role
+
+  @OneToMany(() => ReadingHistory, (history) => history.user)
+  readingHistories: ReadingHistory[]
 
   @ManyToMany(() => User)
   @JoinTable()

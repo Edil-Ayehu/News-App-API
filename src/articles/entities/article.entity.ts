@@ -5,6 +5,7 @@ import { Like } from "src/likes/entities/like.entity";
 import { User } from "src/user/entities/user.entity";
 import { Column, CreateDateColumn, Entity, JoinTable, ManyToMany, ManyToOne, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 import { ArticleStatus } from "../enums/article-status.enum";
+import { ReadingHistory } from "./reading-history.entity";
 
 @Entity()
 export class Article {
@@ -53,6 +54,9 @@ export class Article {
         default: ArticleStatus.DRAFT,
     })
     status: ArticleStatus
+
+    @OneToMany(() => ReadingHistory, (history) => history.article)
+    readingHistories: ReadingHistory[]
 
     @OneToMany(() => Comment, (comment) => comment.article)
     comments: Comment[]

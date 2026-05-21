@@ -10,6 +10,7 @@ import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { Role } from 'src/user/enums/role.enum';
 import { RejectArticleDto } from './dtos/reject-article.dto';
+import { userInfo } from 'os';
 
 @Controller('articles')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -36,8 +37,11 @@ export class ArticlesController {
     }
 
     @Get('slug/:slug')
-    async findOne(@Param('slug') slug: string) {
-        return await this.articlesService.findOne(slug)
+    async findOne(
+        @Param('slug') slug: string,
+        @GetUser() user,
+    ) {
+        return await this.articlesService.findOne(slug, user)
     }
 
     @Delete(":id")
@@ -116,6 +120,17 @@ export class ArticlesController {
             articleId, 
             user.sub, 
             dto.rejectionReason,
+        );
+    }
+
+    @Get('fetch-reading-history')
+    async fetchReadingHistory(
+        @GetUser() currentUser,
+        @Query() paginationDto: PaginationDto,
+    ) {
+        return await this.articlesService.fetchReadingHistory(
+            currentUser,
+            paginationDto,
         );
     }
 }
